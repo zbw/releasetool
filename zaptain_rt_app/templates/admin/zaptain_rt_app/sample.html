@@ -1,0 +1,76 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_static admin_modify %}
+{% load admin_urls %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />{% endblock %}
+
+{# -------- the breadcrumbs are the short navigation links on the top: index > admin > my_app -------- #}
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_label|capfirst|escape }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; {% block breadcrumbs_last %}Sample{% endblock %}
+{% comment %}
+&rsaquo; <a href="{% url opts|admin_urlname:'change' original.pk|admin_urlquote %}">{{ original|truncatewords:"18" }}</a>
+{% endcomment %}
+</div>
+{% endblock %}
+{% endif %}
+
+
+
+
+{% block content %}
+
+<div>Sample documents for new collection <!-- from release candidate <strong>{{ rc.name }}</strong>--></div>
+
+<form action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form">{% csrf_token %}{% block form_top %}{% endblock %}
+<input type="text" name="rc" value="{{ rc.name }}" style="display: none" />
+<div>
+{% if form.errors %}
+    <p class="errornote">
+    {% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+    </p>
+{% endif %}
+<fieldset class="module aligned">
+{% if form %}
+<div class="form-row">
+  {{ form.rc.errors }}
+  {{ form.rc.label_tag }} {{ form.rc }}
+  {% if form.rc.help_text %}
+  <div class="help">{{ form.rc.help_text|safe }}</div>
+  {% endif %}
+</div>
+<div class="form-row">
+  {{ form.parent_rec_id.errors }}
+  {{ form.parent_rec_id.label_tag }} {{ form.parent_rec_id }}
+  {% if form.parent_rec_id.help_text %}
+  <div class="help">{{ form.parent_rec_id.help_text|safe }}</div>
+  {% endif %}
+</div>
+<div class="form-row">
+  {{ form.require_abstract.errors }}
+  {{ form.require_abstract.label_tag }} {{ form.require_abstract }}
+  {% if form.require_abstract.help_text %}
+  <div class="help">{{ form.require_abstract.help_text|safe }}</div>
+  {% endif %}
+</div>
+<div class="form-row">
+  {{ form.size.errors }}
+  {{ form.size.label_tag }} {{ form.size }}
+  {% if form.size.help_text %}
+  <div class="help">{{ form.size.help_text|safe }}</div>
+  {% endif %}
+</div>
+{% endif %}
+</fieldset>
+<div class="submit-row">
+<input type="submit" value="Create collection" class="default" />
+</div>
+
+</div>
+</form></div>
+
+{% endblock %}

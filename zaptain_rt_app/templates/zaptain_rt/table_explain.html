@@ -1,0 +1,68 @@
+{# assumes: explanation #}
+{% comment "license" %}
+    releasetool - quality assessment for automatic subject indexing
+    Copyright (C) 2018 Martin Toepfer <m.toepfer@zbw.eu> | ZBW -- Leibniz Information Centre for Economics
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{% endcomment %}
+
+<table id="tbl_explain" class="table table-condensed">
+    {# the subjects variable should provide all relevant information #}
+    <tr>
+        <th class="col-md-4">Concept</th>
+        <th class="col-md-8">Support</th>
+    </tr>
+    {% for c, info in explanation %}
+    <tr>
+        <td><a href="{{ c }}" target="{{target_kos}}">{{ info.label }}</a></td>
+        <td>
+        {% for sa in info.support %}
+            <span class="confidence_assignment">
+                <span>{{ sa.indexer }}</span>
+                <span class="badge">{{ sa.score }}</span>
+            </span>
+        {% endfor %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% comment %}
+    {% for subjrow in explanation %}
+    {% with subjinfo=subjrow.info subjform=subjrow.form %}
+    <tr {% if subjform.rating.errors %}class="error"{% endif %}>
+        {{ subjform.uri }} {# hidden form to capture state of subject #}
+        {# subjform.rating.errors #}
+        {% for radio in subjform.rating %}
+        <td>
+            {{ radio }}
+        </td>
+        {% endfor %}
+        <td><a href="{{ subjinfo.uri }}" target="{{target_kos}}">{{ subjinfo.label }}</a></td>
+        <td>
+        {% for kat in subjinfo.kats %}
+            <span class="label tag thsys thsys-{{ kat }}">{{ kat }}</span> 
+        {% endfor %}
+        </td>
+    </tr>
+    {% endwith %}
+    {% empty %}
+    <tr>
+        <td colspan="4">/-</td>
+        <td>no subjects assigned.</td>
+        <td>-/</td>
+    </tr>
+    {% endfor %}
+{% endcomment %}
+    

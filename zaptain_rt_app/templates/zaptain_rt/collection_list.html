@@ -1,0 +1,63 @@
+{% extends "./base.html" %}
+{% comment "license" %}
+    releasetool - quality assessment for automatic subject indexing
+    Copyright (C) 2018 Martin Toepfer <m.toepfer@zbw.eu> | ZBW -- Leibniz Information Centre for Economics
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{% endcomment %}
+
+{% block title %}Collection List{% endblock %}
+{% block content_container %}
+
+<h2>Collections</h2>
+
+
+
+{% if collection_list %}
+<table class="table">
+<tr>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Size</th> {# Num. of Documents #}
+    <th>Rev.</th>
+{% if request.user.is_staff %}
+    <th>Rev. (all)</th>
+    <th>Admin</th>
+{% else %}{# staff/user #}
+{% endif %}{# staff/user #}
+</tr>
+{% for x in collection_list %}
+<tr>
+    <td><a href="{% url 'collection' x.id %}">{{ x.name}}</a></td>
+    <td>{{x.description}}</td>
+    <td>{{x.documents__count}}</td>
+    <td>{{x.myreviews}}</td>
+{% if request.user.is_staff %}
+    <td>{{ x.count_reviews }}</td>
+    <td><a href="{% url 'collection_analysis' x.id %}">analyse</a></td>
+{% else %}{# staff/user #}
+{% endif %}{# staff/user #}
+</tr>
+{% endfor %}
+</table>
+{% else %}
+  <p>There are no collections.</p>
+{% endif %}      
+
+
+
+
+
+{% endblock %}
+

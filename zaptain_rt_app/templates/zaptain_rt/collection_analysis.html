@@ -1,0 +1,135 @@
+{% extends "./base.html" %}
+{% comment "license" %}
+    releasetool - quality assessment for automatic subject indexing
+    Copyright (C) 2018 Martin Toepfer <m.toepfer@zbw.eu> | ZBW -- Leibniz Information Centre for Economics
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{% endcomment %}
+
+
+{% block title %}collection {{collection.id}} analysis{% endblock %}
+
+
+{% block head_custom %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
+    {# https://code.jquery.com/jquery-3.3.1.js #}
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+{% endblock %}
+
+{% load releasetool_templateextensions %}
+
+
+{% block content_container %}
+<h1>Collection Analysis</h1>
+
+<div>Basic analysis of collection <strong><a href="{% url 'collection' collection.id %}">{{ collection.name }}</a></strong>.</div>
+<div>Description: {{collection.description}}</div>
+<div>Current AI: <a href="{% url 'admin:zaptain_rt_app_subjectindexer_change' ai.id %}">{{ai.ai_name}}</a></div>
+
+{% if docls_data.n_reviews > 0 %}
+
+<h2>Reporting</h2>
+<div>The report bases on {{ docls_data.n_reviews }} reviews.</div>
+<div>{{docls_data.n_doc_unique}} of {{collection.documents.count}} documents have been reviewed.</div>
+<div>
+{{n_rejected}} of {{docls_data.n_doc_unique}} already reviewed documents 
+were rejected by at least one reviewer.
+</div>
+{# | floatformat:3 #}
+<div>sample-based average Precision = {{df_aggagg.avg_precision_12  | stringformat:"5.3f"}} (stringent)</div>
+<div>sample-based average Precision = {{df_aggagg.avg_precision_012 | stringformat:"5.3f"}} (relaxed)</div>
+<div>sample-based average Recall = {{df_aggagg.avg_recall | stringformat:"5.3f"}}</div>
+
+{% comment "TODO report more in depth about reviewer consistency" %}
+<h3>Consistency</h3>
+<div>... todo ...</div>
+{% endcomment %}
+
+<h3>Dis-/Agreement List</h3>
+
+<table id="tbl_disagreement_list" class="table table-striped table-bordered" style="width:100%">
+    <thead>
+        <tr>
+            <th>External-ID</th>
+            <th>Title</th>
+            <th>Num. Reviews</th>
+            <th>Num. Disagreement</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for k, rowdata in docls_data.agreement.items %}
+        {% with dbdoc=rowdata.dbdoc %}
+        <tr>
+            <td>{{ dbdoc | mk_link_external }}</td>
+            <td>{{ dbdoc.title }}</td>
+            <td><a href="{% url 'compare_review' k %}">{{ rowdata.n_reviews }}</a></td>
+            {% if rowdata.n_reviews > 0 %}
+            <td><a href="{% url 'compare_review' k %}">{{ rowdata.n_disagreement }}</a></td>
+            {% else %}
+            <td>-</td>
+            {% endif %}
+        </tr>
+        {% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<div>Please remember that these measure (precision, recall) depend on your indexing and reviewing guidelines</div>
+
+<div>Explanation: 
+    <strong>Num. Disagreement</strong> 
+    number of different, i.e., unique document-level ratings assigned by reviewers for this
+    document indexing less one.
+</div>
+
+<h3>Not yet reviewed documents:</h3>
+<div>
+{% for doc in without_review %}
+<div style="display: inline-block;">{{doc | mk_link_internal}}</div>
+{% endfor %}
+</div>
+
+<h3>Export Results</h3>
+<ul>
+<li>
+    List all relevant reviews:
+    <a href="{% url 'api_list_collection_reviews' collection.id ai.ai_name %}?export=json">JSON</a>
+</li>
+<li>
+    List of evaluation-data for all reviews:  {# &ai_name{{ai.ai_name}} #}
+    <a href="{% url 'api_list_evaldata' collection.id ai.ai_name %}?export=csv">CSV</a>
+</li>
+<li>
+    Final evaluation, averages over all averaged reviews:
+    <a href="{% url 'api_evaldata_collection' collection.id ai.ai_name %}?export=csv">CSV</a>
+</li>
+</ul>
+
+<h3>Access to raw data</h3>
+Please refer to the <a href="{% url 'admin:index' %}">admin site</a> for
+access to the raw data. 
+You may also consider to backup the complete data base.
+
+{% else %}
+The collection has no reviews yet.
+{% endif %}
+{% endblock %}
+
+
+
+{% block bottom_script %}
+$(document).ready(function() {
+    $('#tbl_disagreement_list').DataTable();
+});
+{% endblock %}

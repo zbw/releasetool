@@ -1,0 +1,14 @@
+#
+#
+# remember compatibilty requirement: python 3.4 !
+#
+#
+Django>=2.0.3
+django-import-export>=1.0.0
+django-q>=0.9.4
+simplejson>=3.11.1
+urllib3>=1.21.1
+requests>=2.18.4
+numpy>=1.11.3
+scipy>=0.17.1
+pandas>=0.19.2

@@ -1,0 +1,511 @@
+{% extends "./base.html" %}
+{% comment "license" %}
+    releasetool - quality assessment for automatic subject indexing
+    Copyright (C) 2018 Martin Toepfer <m.toepfer@zbw.eu> | ZBW -- Leibniz Information Centre for Economics
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{% endcomment %}
+
+{% load static %}
+
+{% block title %}{{document.external_id}} - review{% endblock %}
+
+
+{% block head_custom %}
+{% if show_graph %}
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="{% static 'zaptain_rt/js/rt_graphview.js' %}"></script>
+{% endif %}
+{% endblock %}
+
+
+
+{% block z_nav_custom_right %}
+{# Reviewing Guidelines #}
+<li><a href="{{ guideline }}" title="Reviewing Guidelines" target="releasetool_help">Help</a></li>
+{% endblock %}
+
+
+
+
+
+{# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #}
+{% block content_container %}
+{% with target_kos="rt_thesaurus" target_extdoc="rt_externaldocument" target_extdoc_api="rt_externaldocument_api" %}  {# browser window target names #}
+<div class="row">
+
+{# DOCUMENT INFO #}
+<div class="col-md-9">
+    <div class="panel panel-default">
+    <table id="tbl_doc_metadata" class="table-condensed">
+    <tr>
+        <td>Title:</td>
+        <td id="z_field_title">
+            
+            <span id="z-meta-title" name="title">
+                <b>{% if "error" in docjson %}{{document.title}}{% else %}{{docjson.title}}{% endif %}</b>
+            </span>
+        </td>
+    </tr>
+    <tr class="keywords">
+        <td>Keywords:</td>
+        <td id="z_field_keywords">
+        <div class="labels">
+            {% for subj in docjson.subject %}
+              <span class="label">{{subj}}</span>
+            {% endfor %}
+        </div>
+        </td>
+    </tr>
+    <tr>
+        <td>Abstract:</td>
+        <td id="z_field_abstract">
+            <span id="z-meta-abstract">{{docjson.description}}</span>
+        </td>
+    </tr>
+    </table>
+    </div>
+</div>
+
+{# PAGER and PROGRESS #}
+<div class="col-md-3 info-panel">
+    <table id="tbl_collection" class="table table-condensed">
+    <tr>
+        <td class="col-sm-2">Collection:</td>
+        <td class="col-sm-10">
+            {% if collection %}
+            <a href="{% url 'collection' collection.id %}">{{collection.name}}</a>
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td class="col-sm-2">Document:</td>
+        <td class="col-sm-10" id="z_field_docid">
+            <span id="z-meta-docid">{{document.external_id}}</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="col-sm-2">Links:</td>
+        <td class="col-sm-10">
+            <a href="{{document.format_weblink}}" target="{{target_extdoc}}" class="btn btn-xs"><span class="glyphicon glyphicon-link"></span></a>
+            {% if docjson.identifier_url %}
+            <a href="{{docjson.identifier_url.0}}" target="{{target_extdoc}}" class="btn btn-xs"><span class="glyphicon glyphicon-file"></span></a>
+            {% endif %}
+            {% if request.user.is_staff %}
+            <a href="{{document.format_api_link}}" target="{{target_extdoc_api}}" class="btn btn-xs"><span class="glyphicon glyphicon-wrench"></span></a>
+            {% else %}{# staff/user #}
+            {% endif %}{# staff/user #}
+        </td>
+    </tr>
+    <tr>
+        <td class="col-sm-2">Navigation:</td>
+        <td class="col-sm-10">
+          {% if not collection_slice.0 is None %}
+          <a href="{{collection_slice.0}}?collection={{collection.id}}" class="btn btn-xs"><span class="glyphicon glyphicon-chevron-left"></span></a>
+          {% else %}
+          <a href="#" class="btn btn-xs disabled"><span class="glyphicon glyphicon-chevron-left"></span></a>
+          {% endif %}
+          {% if not collection_slice.1 is None %}
+          <a href="{{collection_slice.1}}?collection={{collection.id}}" class="btn btn-xs" title="email"><span class="glyphicon glyphicon-chevron-right"></a>
+          {% else %}
+          <a href="#" class="btn btn-xs disabled"><span class="glyphicon glyphicon-chevron-right"></span></a>
+          {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td class="col-sm-2">Actions:</td>
+        <td class="col-sm-10">
+            <a href="mailto:{{support_email}}?subject=Reviewing%20Document%20{{document.external_id}}" class="btn btn-xs" target="_top"><span class="glyphicon glyphicon-envelope"></span></a>
+            <a href="#" id="toggle_printstyle" class="btn btn-xs"><span class="glyphicon glyphicon-print"></span></a>
+        </td>
+    </tr>
+    <tr>
+        <td class="col-sm-2">Progress:</td>
+        <td class="col-sm-10">{# progress.n_skipped, #}{{ progress.n_review }} / {{ progress.n_total }}</td>
+    </tr>
+    </table>
+</div> {# end of col-md #}
+
+</div> {# end of row #}
+
+
+
+
+{# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #}
+{# SUBJECT ASSIGNMENTS | RATING #}
+<form id="review_form" action="{% url 'review' document.external_id %}" method="post" novalidate >
+{% csrf_token %}
+{{ subjratings_form.management_form }}
+<div><h4>Automatically Assigned Subjects</h4>
+    {% if explanation %}
+    {# <a href="#" data-toggle="modal" data-target="#div_info_explain" title="explain"><span class="glyphicon glyphicon-info-sign"></span></a> #}
+    <a href="#" data-toggle="modal" data-target="#div_info_explain" title="explain">(explain)</a> 
+  
+    <div id="div_info_explain" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Explanation</h4>
+          </div>
+          <div class="modal-body">
+            {% include "zaptain_rt/table_explain.html" with explanation=explanation %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <a href="{% url 'api_explain' external_id=document.external_id %}" target="rt_explain">(explain)</a>{#(no explanation available)#}
+    {% endif %}
+</div>
+
+<div class="row">
+<div class="col-md-9">
+<div class="panel panel-default" id="subjects_panel">
+<table id="tbl_ratings" class="table table-condensed">
+    {# the subjects variable should provide all relevant information #}
+    <tr>
+        <th class="col-md-2" colspan="4">Rating</th>
+        <th class="col-md-5">Subject</th>
+        <th class="col-md-5">Categories</th>
+    </tr>
+    <tr class="ratinginfo">
+        <th data-toggle="tooltip" title="harmful">--</th>
+        <th data-toggle="tooltip" title="fair">0</th>
+        <th data-toggle="tooltip" title="helpful">+</th>
+        <th data-toggle="tooltip" title="really helpful">++</th>
+        <th colspan="2"></th>
+    </tr>
+    {% for subjrow in subj_rowdata %}
+    {% with subjinfo=subjrow.info subjform=subjrow.form %}
+    <tr {% if subjform.rating.errors %}class="error"{% endif %}>
+        {{ subjform.uri }} {# hidden form to capture state of subject #}
+        {# subjform.rating.errors #}
+        {% for radio in subjform.rating %}
+        <td>
+            {{ radio }}
+        </td>
+        {% endfor %}
+        <td><a href="{{ subjinfo.uri }}" target="{{target_kos}}">{{ subjinfo.label }}</a></td>
+        <td>
+        {% for kat in subjinfo.kats %}
+            <span class="label tag thsys thsys-{{ kat }}">{{ kat }}</span> 
+        {% endfor %}
+        </td>
+    </tr>
+    {% endwith %}
+    {% empty %}
+    <tr>
+        <td colspan="4">/-</td>
+        <td>no subjects assigned.</td>
+        <td>-/</td>
+    </tr>
+    {% endfor %}
+</table>
+</div> {# end of panel #}
+</div>
+
+{# -- DOC-LEVEL #}
+<div class="col-md-3 info-panel" id="div_docrating">
+    <table id="tbl_docrating" class="table table-condensed">
+    <thead>
+        <tr>
+            <th></th>
+            <th>Document-level Quality</th>
+        </tr>
+    </thead>
+    <tbody {% if docrating_form.errors %}class="error"{% endif %}>
+        {{ docrating_form.doc_level.label_tag }}
+        {% for radio in docrating_form.rating reversed %}
+        <tr>
+            <td>{{ radio }}</td>
+            <td>{{ radio.choice_label }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    {% if not review %}
+    <input id="submitbu" type="submit" value="Submit" class="btn btn-default" />
+    {% else %} {# else review exists? #}
+    <div class="alert alert-info text-center">already reviewed</div>
+    {% endif %} {# end if review exists? #}
+</div>
+{# -- DOC-LEVEL #}
+
+</div> {# end of row #}
+
+
+{# SUBJECTs MISSING #}
+<div class="row">
+<div class="col-md-9">
+<h4>Missing Subjects</h4>
+<div class="panel panel-default">
+{% if not review %}
+<div class="input-group">
+    <div class="input-group-btn">
+        <button id="bu_info_descriptor_search" type="button" class="btn btn-default"  data-toggle="modal" data-target="#div_info_descriptor_search"><span class="glyphicon glyphicon-info-sign"></span></button>
+    </div>
+    <input type="text" class="form-control" id="i_descriptor_search" placeholder="Add Missing Subject" />
+</div>
+<div id="div_info_descriptor_search" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Subject term search syntax</h4>
+      </div>
+      <div class="modal-body">
+        <p>By default, search is performed in a fuzzy way, for instance, 
+            <code>open un</code> will match &quotUrban Open Space&quot.
+        </p>
+        <p>You can, however, force search to right truncation with the prefix <code>^</code>, for example:
+            <code>^Open un</code> will match &quotOpen University&quot but not &quotUrban Open Space&quot.
+        </p>        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<table id="tbl_missingsubjs" class="table table-condensed">
+{{ subjmissing_form.management_form }}
+<tr>
+    <th class="col-sm-2"></th>
+    <th class="col-sm-5">Missing Subject</th>
+    <th class="col-sm-5"></th>
+</tr>
+{% for r in subjmissing_rowdata %}
+<tr>
+    {# r.form.DELETE #}
+    <td>{% if not review %}
+        <a class="subj_remove" data-c="{{r.info.uri}}">remove</a>
+        {% endif %}
+    </td>
+    {# <input name="smis-0-DELETE" id="id_smis-0-DELETE" type="checkbox"> #}
+    <td>
+        <span><a href="{{r.info.uri}}" target="{{target_kos}}">{{r.info.label}}</a> {{r.form}}</span>
+    </td>
+    <td></td>
+</tr>
+{% endfor %}
+</table>
+</div> {# end of panel for table #}
+</div> {# end of col-md-x #}
+<div class="col-md-3">
+</div> {# end of col-md-x #}
+</div> {# end of row #}
+
+
+{# SUBJECTs CANDIDATES (optional, only show in 'extended mode') #}
+{% if extended_form %}
+<div class="row">
+    <div>Candidate Subjects</div>
+</div>
+{% endif %}
+
+</form>
+
+
+
+{# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #}
+
+{# GRAPH VIEW #}
+{% if show_graph %}
+<div class="row">
+    <div id="graph_info" class="container">
+        {# MESSAGES like e.g. CONNECTION ERROR #}
+    </div>
+    <div id="graph_container" class="container">
+      <svg width="600" height="500"></svg>
+    </div>
+</div>
+{% endif %}
+
+
+
+{# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #}
+
+
+
+{# DEBUGGING: show docjson from catalog api: #}
+{% if debug %}
+<pre id="docjson_pre">
+{{ docjson_str }}
+</pre>
+{% endif %}
+
+
+{% endwith %}
+{% endblock %}
+{# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #}
+
+
+
+
+
+
+
+
+
+
+{% block bottom_script %}
+function regreplacer_iddec(m, gp, gi, gs, offset, text) {
+    return [gp, parseInt(gi)-1, gs].join("-");
+}
+function decrease_id(s) {
+    return s.replace(/^(.*?)-(\d+)-(uri)$/, regreplacer_iddec);
+}
+
+function collect_missingSubjects() {
+    return $("#tbl_missingsubjs").find("span.tag > input:hidden").map(function() {return(this.value);}).get();
+}
+
+function collect_autoSubjects() {
+    return $("#subjects_panel").find("input:hidden").filter(
+        function(i) {return this.id.endsWith("uri");}).map(
+        function() {return this.value;}).get();
+}
+function collect_subjects() {
+    return $.merge(collect_autoSubjects(), collect_missingSubjects());
+}
+
+function discard() {
+    var el = $(this);
+    var row = el.closest("tr");
+    
+    // we must renumber all following hidden inputs, do this now
+    row.nextAll().each(function() {
+        var hiin = $(this).find("input:hidden").first();
+        hiin.attr("id", function(i, v) {return decrease_id(v);});
+        hiin.attr("name", function(i, v) {return decrease_id(v);});
+    });
+    
+    var _i_before = el.closest("td").siblings().find("input");
+    var el_id = _i_before.attr("name").replace("-uri", "");
+    var _i_delete =  $("<input>", {"type": "hidden", 
+                    "id": (el_id + "-DELETE"), 
+                    "name": (el_id + "-DELETE"), 
+                    "value":"True"});
+    row.remove();
+    var forms_manager = $("#id_smis-TOTAL_FORMS").attr("value", function() {return parseInt(this.value) - 1;});
+    forms_manager.parent().prepend(_i_delete);
+}
+
+function toggle_printstyle() {
+        $(".rating_radio span").hide();
+        $(".rating_radio").removeClass("rating_radio").addClass("rating_radio_print");
+        window.print();
+        $(".rating_radio_print").removeClass("rating_radio_print").addClass("rating_radio");
+        $(".rating_radio span").show();
+}
+
+$(document).ready(function(){
+    {# ENABLE TOOLTIPS #}
+    $('[data-toggle="tooltip"]').tooltip({delay: 500});
+    
+    {# BIND ACTIONS #}
+    $('.subj_remove').click(discard);
+    $('#toggle_printstyle').click(toggle_printstyle);
+    
+    {# ENABLE AUTOCOMPLETE DESCRIPTOR SEARCH #}
+    {# TODO: http://jqueryui.com/autocomplete/#maxheight #}
+    $("#i_descriptor_search").autocomplete({
+        minLength : 2,
+        source: function(request, response) {
+            // gather the search term:
+            var search_string = $("#i_descriptor_search").val();
+            // gather concepts fitting to the search term:
+            $.ajax({
+                url: "{% url 'search_kos' %}",
+                dataType: "json",
+                data: {
+                    "q": search_string
+                },
+                success: function(data) {
+                    var _exclude = collect_subjects();
+                    var proposals = [];
+                    $.each( data.results.bindings, function( i, cobj ) {
+                        var cref = cobj.c.value;
+                        if (_exclude.indexOf(cref) < 0) {
+                            var sugi = new Object();  // i'th suggested item
+                            sugi.label = cobj.literal.value;
+                            if (cobj.literal.value == cobj.prefLabel.value) {
+                                sugi.label += " / *";
+                            } else {
+                                sugi.label += " / " + cobj.prefLabel.value;
+                            }
+                            sugi.value = cobj;
+                            proposals.push(sugi);
+                            // from now on, exclude this concept...
+                            _exclude.push(cref);
+                        }
+                    });
+                    response(proposals);
+                }
+            });
+        },
+        select: function(event, ui) {
+            // event: a "final" selection of an item
+            event.preventDefault();
+            var selected_itemval = ui.item.value;
+            var selected_c = selected_itemval.c.value;
+            var selected_prefLabel = selected_itemval.prefLabel.value;
+            var txtf_ = $("#i_descriptor_search");
+            txtf_.data("concept", selected_itemval);
+            txtf_.val(""); {# RESET input field #}
+            
+            {# check if already assigned/added as missing #}
+            if (collect_subjects().indexOf(selected_c) < 0) {
+                {# data handling and presentation #}
+                var idxpp = parseInt($("#id_smis-TOTAL_FORMS").attr("value"));
+                $("#id_smis-TOTAL_FORMS").attr("value", idxpp + 1); // function() {return parseInt(this.value) + 1;});
+                var _input = $("<input>", {
+                        "type": "hidden",
+                        "id": "id_{{subjmissing_form.prefix}}-" + idxpp + "-uri", 
+                        "name": "{{subjmissing_form.prefix}}-" + idxpp + "-uri",
+                        "value": selected_c
+                    }); // .attr("readonly", true);
+                var _container = $("<span></span>").addClass("tag");
+                var ca = $("<a>", {"target": "rt_thesaurus", "href": selected_c}).text(selected_prefLabel);
+                _container.append(ca);
+                _container.append(_input);
+                
+                var _del = $("<td>");
+                _del.append($("<a>remove</a>").click(discard));
+                
+                var _tr = $("<tr>").append(_del).append(_container).append($("<td>"));
+                
+                $("#tbl_missingsubjs").append(_tr);
+                _container.wrap("<td></td>");
+            }            
+        },
+        focus: function(event, ui) {
+            // focus is temporarily on item without final selection event
+            var txtf_ = $("#i_descriptor_search");
+            txtf_.val(ui.item.value.prefLabel.value);
+            return false;
+        }
+    });
+
+
+    {% if show_graph %}
+    render_graph("{{ document.external_id }}", "{% url 'api_graph' document.external_id %}");
+    {% endif %}
+});
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "./base.html" %}
+{% comment "license" %}
+    releasetool - quality assessment for automatic subject indexing
+    Copyright (C) 2018 Martin Toepfer <m.toepfer@zbw.eu> | ZBW -- Leibniz Information Centre for Economics
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{% endcomment %}
+
+{% block title %}Collection Overview{% endblock %}
+
+{% block head_custom %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
+    {# https://code.jquery.com/jquery-3.3.1.js #}
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+{% endblock %}
+
+{% block content_container %}
+
+<div class="row">
+
+<h2>Collection: {{ collection.name }}</h2>
+
+{% if todo_documents %}
+{% else %}
+<p>You have already reviewed all documents in this collection.</p>
+{% endif %}
+{% if reviews %}
+{% else %}
+<p>You have not reviewed any documents in this collection, yet.</p>
+{% endif %}
+
+<h3>Documents</h3>
+<table id="tbl_doclist" class="table table-condensed table-bordered" style="width:100%">
+<thead>
+    <tr>
+        <th class="col-sm-2">External-ID</th>
+        <th class="col-sm-1">Review</th>
+        <th class="col-sm-9">Title</th>
+    </tr>
+</thead>
+<tbody>
+{% if todo_documents %}
+{% for document in todo_documents %}
+<tr {% if forloop.first %}id="documents_todo"{% endif %}>
+    <td><a href="{{document.format_weblink}}" target="rt_externaldocument" title="Show in External Catalog">{{document.external_id}}</a></td> {# <a href="{% url 'api_document' document.external_id %} "> #}
+    <td><a href="{% url 'review' document.external_id %}?collection={{ collection.id }}" class="glyphicon glyphicon-comment" title="create review"></a></td> {# no review available #}
+    <td>{{document.title}}</td>
+</tr>
+{% endfor %}
+{% endif %}
+</tr>
+{% if reviews %}
+{% for review in reviews %}
+{% with document=review.document %}
+<tr id="documents_reviewed">
+    <td><a href="{{document.format_weblink}}" target="rt_externaldocument" title="Show in External Catalog">{{document.external_id}}</a></td> {# <a href="{% url 'api_document' document.external_id %} "> #}
+    <td><a href="{% url 'review' document.external_id %}?collection={{ collection.id }}" title="show review">{{review.total_rating}}</a></td>
+    <td>{{document.title}}</td>
+</tr>
+{% endwith %}
+{% endfor %}
+{% endif %}
+</tbody>
+</table>
+
+</div> {# endrow #}
+{% endblock %}
+
+
+
+
+{% block bottom_script %}
+$(document).ready(function() {
+    $("#tbl_doclist").DataTable({
+        "order": [[1, "asc"], [0, "asc"]]
+    });
+});
+{% endblock %}

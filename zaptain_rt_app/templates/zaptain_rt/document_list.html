@@ -1,0 +1,43 @@
+{% extends "./base.html" %}
+{% comment "license" %}
+    releasetool - quality assessment for automatic subject indexing
+    Copyright (C) 2018 Martin Toepfer <m.toepfer@zbw.eu> | ZBW -- Leibniz Information Centre for Economics
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{% endcomment %}
+
+{% block title %}Document List{% endblock %}
+{% block content_container %}
+
+<h2>Documents</h2>
+<p>(view for debugging only)</p>
+
+    {% if document_list %}
+    <ul>
+
+      {% for document in document_list %}
+      <li>
+        {{ document.external_id}} {{document.title}}
+        <a href="{% url 'review' document.external_id %}">(review)</a>
+        <a href="{% url 'api_document' document.external_id %}">(catalog)</a>
+      </li>
+      {% endfor %}
+
+    </ul>
+    {% else %}
+      <p>There are no documents.</p>
+    {% endif %}      
+
+{% endblock %}
+

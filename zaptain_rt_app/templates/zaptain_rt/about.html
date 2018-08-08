@@ -1,0 +1,54 @@
+{% extends "./base.html" %}
+{% comment "license" %}
+    releasetool - quality assessment for automatic subject indexing
+    Copyright (C) 2018 Martin Toepfer <m.toepfer@zbw.eu> | ZBW -- Leibniz Information Centre for Economics
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{% endcomment %}
+
+{% block title %}About{% endblock %}
+{% block content_container %}
+
+<h2>Development</h2>
+<p>
+If you are interested in the source code of the application,
+please visit <a href="{{ url_sourcecode }}">the project's website</a>.
+</p>
+
+<h2>Presentations</h2>
+<p>
+A prototype of the tool 
+has been presented under the title
+&quot;Towards Semantic Quality Control of Automatic Subject Indexing&quot;
+at 
+<a href="http://dx.doi.org/doi:10.1007/978-3-319-67008-9_56">TPDL-2017, Thessaloniki, Greece, September 18-21, 2017</a>
+(Martin Toepfer &amp; Christin Seifert, 2017).
+That predecessor used semantic web technology as a database backend.
+By contrast to the prototype, the new releasetool has been reimplemented and revised 
+substantially in several aspects.
+Semantic web technology is now only accessed as a service to access the thesaurus.
+The reimplementation has been performed in order to put more emphasize on business processes
+and system integration.
+</p>
+
+<h2>Automatic Subject Indexing</h2>
+<p>
+The releasetool does not depend on a specific subject indexing method. 
+However, the explanation functionality of the tool is particularly of interest when
+<a href="https://ieeexplore.ieee.org/document/7991557/">fusion approaches</a>
+are applied.
+</p>
+
+{% endblock %}
+

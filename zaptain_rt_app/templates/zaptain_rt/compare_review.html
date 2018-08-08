@@ -1,0 +1,124 @@
+{% extends "./base.html" %}
+{% comment "license" %}
+    releasetool - quality assessment for automatic subject indexing
+    Copyright (C) 2018 Martin Toepfer <m.toepfer@zbw.eu> | ZBW -- Leibniz Information Centre for Economics
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{% endcomment %}
+
+{% block title %}{{dbdoc.external_id}} - compare reviews{% endblock %}
+
+
+
+
+{# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #}
+{% block content_container %}
+{% with target_kos="rt_thesaurus" target_extdoc="rt_externaldocument" %}
+<div class="row">
+
+{# DOCUMENT INFO #}
+<div class="col-md-9">
+    <div class="panel panel-default">
+    <table class="table">
+    <tr>
+        <td>Title:</td>
+        <td>
+            
+            <span name="title">
+                <b>{% if "error" in docjson %}{{dbdoc.title}}{% else %}{{jsondoc.title}}{% endif %}</b>
+            </span>
+        </td>
+    </tr>
+    <tr class="keywords">
+        <td>Keywords:</td>
+        <td>
+        <div class="labels">
+            {% for subj in jsondoc.subject %}
+              <span class="label">{{subj}}</span>
+            {% endfor %}
+        </div>
+        </td>
+    </tr>
+    <tr>
+        <td>Abstract:</td>
+        <td id="z_field_abstract">
+            <span id="z-meta-abstract">{{jsondoc.description}}</span>
+        </td>
+    </tr>
+    </table>
+    </div>
+</div>
+{% endwith %}
+
+
+<div class="row">
+<div class="col-md-9">
+<div class="panel panel-default">
+<table class="table table-condensed">
+    <tr>
+        <th class="col-md-4">Subject</th>
+        <th class="col-md-1">added</th>
+        {% for revid, rev in compare_data.reviews.items %}
+        <th class="col-md-1">{{ rev.by }}</th>
+        {% endfor %}
+{% comment "TODO sum col-md up to 12" %}
+        {% with numrev= %}
+        <th class="col-md-{{}}"></th>
+        {% endwith %}
+{% endcomment %}
+    </tr>
+    
+    {% with reviews=compare_data.reviews %}
+    {% for subjref, ratrow in compare_data.ratings.items %}
+    <tr>
+        <td class="col-md-4"><a href="{{ subjref }}" target="{{target_kos}}">{{ ratrow.label | default:"unknown" }}</a></td>
+        <td class="col-md-1">{% if ratrow.is_added %}true{% endif %}</td>
+        {% for revid, rev in compare_data.reviews.items %}
+        <td class="col-md-1">
+            {% for rat in ratrow.rating %}
+            {% if rat.0 == rev.by %}
+            {{ rat.1 }}
+            {% endif %}
+            {% endfor %}
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+    {% endwith %}
+</table>
+</div> {# end of panel #}
+</div>
+
+{# -- DOC-LEVEL -- #}
+<div class="col-md-3" id="div_docrating">
+    <table class="table table-condensed" {# id="tbl_docrating" #}>
+    <tr>
+        <th>Reviewer</th>
+        <th>Document-level</th>
+    </tr>
+    {% for revid, rev in compare_data.reviews.items %}
+    <tr>
+        <td>{{ rev.by }}</td>
+        <td>{{ rev.total_rating }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+</div>
+{# -- DOC-LEVEL #}
+
+</div> {# end of row #}
+
+
+
+{% endblock %}

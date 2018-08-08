@@ -1,0 +1,163 @@
+{% comment "license" %}
+    releasetool - quality assessment for automatic subject indexing
+    Copyright (C) 2018 Martin Toepfer <m.toepfer@zbw.eu> | ZBW -- Leibniz Information Centre for Economics
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+{% endcomment %}
+{% comment "template info" %}
+This is the base template.
+It includes references to js libs and the default menu.
+
+It requires a custom context processor, that lists available collections.
+
+Blocks to be refined by subtemplates:
+
+main:
+    title
+    content
+
+optional:
+    head_custom
+    z_nav_custom
+    footer
+    bottom_script
+
+help:
+https://docs.djangoproject.com/en/2.0/topics/templates/
+https://docs.djangoproject.com/en/2.0/ref/templates/language/
+
+@author: Martin Toepfer, 2017-2018
+
+{% endcomment %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    {% block head %}
+    {% block head_common %}
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    
+    {% comment "use only if you provide the libs in static folder" %}
+    <script src="/static/zaptain_rt/js/jquery-3.3.1.min.js"></script>
+
+    <link rel="stylesheet" href="/static/zaptain_rt/css/bootstrap-3.3.7.min.css">
+    <script src="/static/zaptain_rt/js/bootstrap-3.3.7.min.js"></script>
+    
+    <link rel="stylesheet" href="/static/zaptain_rt/css/jquery-ui.css">
+    <script src="/static/zaptain_rt/js/jquery-ui-1.12.1.min.js"></script>
+    {% endcomment %}
+    
+    <link rel="stylesheet" href="/static/zaptain_rt/css/zaptain_rt.css">
+    
+    {% endblock %}
+    {% block head_custom %}{% endblock %}
+
+    <title>{% block title %}{% endblock %} &lt;releasetool&gt;</title>
+
+    {% endblock %}
+  </head>
+
+  <body>
+
+    <div id="zais_menu" class="container_0">
+        <nav class="navbar navbar-inverse">
+          <div class="container-fluid">
+            <div class="navbar-header">
+              <a class="navbar-brand" href="{% url 'index' %}" title="Home">releasetool<sup><i>V1.alpha</i></sup></a>
+            </div>
+            <ul class="nav navbar-nav">
+              <li><a href="{% url 'index' %}">Home</a></li>
+
+
+              {% if user.is_authenticated %}
+              <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">Collection
+                <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li><a href="{% url 'collections' %}">Overview</a></li>
+                  <li role="separator" class="divider"></li>
+                  {# <li><a href="/review/all/0">All</a></li> #}
+                  {% for cllcn in rt_collections %}
+                  <li><a href="{% url 'collection' cllcn.id %}?collection={{ cllcn.id }}">{{ cllcn.name }}</a></li>
+                  {# <li><a href="{% url 'review' cllcn.documents.first.external_id %}?collection={{ cllcn.id }}">{{ cllcn.name }}</a></li> #}
+                  {% endfor %}
+                </ul>
+              </li>
+              {% endif %}
+            </ul>
+            
+            {% block z_nav_custom %}{% endblock %}
+
+            <ul class="nav navbar-nav navbar-right">
+              {% block z_nav_custom_right %}{% endblock %}
+
+              {% if user.is_authenticated %}
+              <li><a href="{% url 'logout' %}" id="a_logout">Logout</a></li>
+              {# <li><a href="/account" id="a_account">Account</a></li> #}
+              {% if user.is_staff %}
+              <li><a href="{% url 'admin:index' %}" target="rt_admin">Admin</a></li>
+              {% endif %}
+              {% else %}
+              <li><a href="{% url 'login' %}" id="a_login">Login</a></li>
+              {% endif %}
+              <li><a href="{% url 'about' %}" id="a_about">About</a></li>
+            </ul>
+          </div>
+        </nav>
+    </div>
+
+{% if messages %}
+    <div id="messages_container" class="container">
+        <div>Messages:</div>
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+    <div id="content" class="container_1">
+    {% block content %}
+    <div class="container">{% block content_container %}{% endblock %}</div>
+    {% endblock %}
+    </div>
+
+
+
+  <footer id="footer" class="container-fluid">
+        {% block footer %}
+        <div>
+           the <a href="{{ url_sourcecode }}" class="silent">releasetool</a>
+        is an open source project, developed by
+            <a href="http://zbw.eu/" class="silent">zbw</a>, 2017-2018
+        </div>
+        {% endblock %}
+  </footer>
+
+  <script>
+  {% block bottom_script %}
+  {% endblock %}
+  </script>
+
+  </body>
+</html>
