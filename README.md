@@ -6,6 +6,23 @@ As a consequence, quality is typically controlled before using automatically gen
 in operative information retrieval systems.
 The releasetool intends to assist libraries in such quality control workflows.
 
+```
++---------+          +-----------------------+
+|automatic|          |  releasetool          |
+|subject  +--------->+  (quality assessment) |
+|indexing | import   |                       |
++---+-----+ release  +----------+------------+
+    ^       candidate           | 
+    |                           |
+    | documents                 | if quality == ok:
+    | without                   |   release controlled subject terms
+    | controlled                v
+    | subject terms    +--------+--------+
+    +------------------+ library catalog |
+                       | (used for IR)   |
+                       +-----------------+
+```
+
 The project aims to build a straight-forward web application as a starting point 
 for quality assessment of automatic subject indexing.
 The intended audience of this project are software developers at libraries 
