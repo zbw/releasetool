@@ -82,8 +82,8 @@ at the command line using [commands](zaptain_rt_app/management/commands/).
 
 * [Technical documentation](docs/README_DEV.md)
 * User documentation for the two main types of users:
-  * [PROSIs](README_PROSI.md) (professional subject indexers) mainly perform reviews,
-  * [LISUs](README_LISU.md) (librarian super users) manage and monitor releases.
+  * [PROSIs](docs/README_PROSI.md) (professional subject indexers) mainly perform reviews,
+  * [LISUs](docs/README_LISU.md) (librarian super users) manage and monitor releases.
 
 
 
