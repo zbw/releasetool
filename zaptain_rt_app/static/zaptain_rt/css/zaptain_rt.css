@@ -1,26 +1,29 @@
-/* GENERAL RULES */
 .panel-default {
     border-color: #bbb;
 }
-.panel, .info-panel {
-/* especially: the panels of the reviewing view... */
-    border-style: solid;
-    border-width: 3px;
-    border-radius: 2%;
-    border-style: solid;
-    border-width: 3px;
-    border-color: #d4d4d4;
+.ui-autocomplete {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
-.error {
-  border-style: solid;
-  border-color: #b08b8b;
+* html .ui-autocomplete {
+    height: 100px;
 }
-a .glyphicon {
-  color: #868789;
+
+.confidence_assignment {
+    border: 1px solid lightgray;
+    padding: 5px;
+    border-radius: 15%;
 }
-a:hover .glyphicon {
-  color: black;
+
+.ratinginfo + .tooltip > .tooltip-inner {
+      background-color: #73AD21;
+      color: #FFFFFF;
+      border: 1px solid black;
+      padding: 15px;
+      font-size: 20px;
 }
+
 footer {
     padding: 15px;
     border-top: 1px;
@@ -30,13 +33,24 @@ footer {
     margin-right: 50px
 }
 
-/* SPECIAL RULES */
 
-/* METADATA */
+.subject {
+    background-color: #AAAAAA;
+    color: #FFFFFF;
+}
+
 #tbl_doc_metadata a, #tbl_doc_metadata a:hover {
   color: #333;
 }
-/* checked usage of .keywords : 201808  */
+
+a .glyphicon {
+  color: #868789;
+}
+a:hover .glyphicon {
+  color: black;
+}
+
+
 .keywords .label {
   display: inline-block;
   font-size: small;
@@ -49,41 +63,20 @@ footer {
   border: 3px solid darkred;
 }
 
-/* OTHER, especiall REVIEWing VIEW */
 
-.ratinginfo + .tooltip > .tooltip-inner {
-  background-color: #73AD21; 
-  color: #FFFFFF; 
-  border: 1px solid black; 
-  padding: 15px;
-  font-size: 20px;
+
+.error {
+  border-style: solid;
+  border-color: #b08b8b;
+  /* background-color: #b08b8b; */
 }
 
-
-/* checked: 201808 */
-.confidence_assignment {
-    border: 1px solid lightgray;
-    padding: 5px;
-    border-radius: 15%;
-}
-
-
-
-/* >> DIV DOCRATING */
 #div_docrating {
-  border-color: #8d8d8d;
+  border-style: solid;
+  border-width: 3px;
+  border-color: #ccc;
+  border-radius: 2%;
 }
-/* SUBMIT BUTTON of REVIEW FORM */
-#div_docrating input[type=submit] { 
-	background-color: #e3e6e9;
-	border-width: 2px;
-	border-color: #787878;
-	/* margin-top: 10px; */
-	margin-bottom: 10px;
-}
-/* << DIV DOCRATING /*
-
-
 
 #tbl_ratings th {
     text-align: center;
@@ -119,6 +112,9 @@ footer {
 .rating_radio input:checked ~ .dv_skip, .rating_radio input:hover ~ .dv_skip { /* skip XXX */
     background-color: #2196F3;
 }
+.rating_radio input:checked ~ .dv_skip_2, .rating_radio input:hover ~ .dv_skip_2 { /* skip YYY */
+    background-color: #2196F3;
+}
 .rating_radio input:checked ~ .dv_reject, .rating_radio input:hover ~ .dv_reject { /* reject */
     background-color: #f00;
 }
@@ -128,6 +124,7 @@ footer {
 .rating_radio input:checked ~ .dv_good, .rating_radio input:hover ~ .dv_good { /* good */
     background-color: #5cb85c;
 }
+
 
 .rating_radio input:checked ~ .sv_harmful { /* harmful */
     background-color: #f00;
@@ -156,7 +153,8 @@ footer {
 
 
 
-/* THESAURUS CATEGORY COLORS */ /* ISSUE #47 */
+
+/* ISSUE #47 */
 .thsys-V {
     background-color: #99cc00;
 }
@@ -179,12 +177,3 @@ footer {
     background-color: #408000;
 }
 
-/* AUTOCOMPLETE */
-.ui-autocomplete {
-    max-height: 200px;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-* html .ui-autocomplete {
-    height: 100px;
-}
