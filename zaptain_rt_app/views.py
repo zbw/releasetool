@@ -299,7 +299,8 @@ def review(request, external_id):
             
             "collection": collection,
             "document": dbdoc,
-            "docjson": rqctx["jsondoc"], "docjson_str": json.dumps(rqctx["jsondoc"], indent=2),
+            "docjson": rqctx["jsondoc"],
+            "docjson_str": json.dumps(rqctx["jsondoc"], indent=2),
             "collection_slice": (_predecessor, _successor), # paginator_page,
             "progress": rqctx['reviewer'].get_progress_info(collection),
             "explanation": explanation,
