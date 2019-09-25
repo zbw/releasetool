@@ -159,11 +159,11 @@ def extend_record(record):
     for gk in GROUP_FKS:
         if gk in record:
             for broader_record in recx[gk]:
-                id_keys = list(filter(lambda x: x.endswith('_id'), broader_record.keys()))
-                ext_id = broader_record[id_keys[0]] if len(id_keys) > 0 else 'error'
-                broader_record['external_id'] = ext_id
-                if not 'type' in broader_record:
-                    broader_record['type'] = 'unknown'
+                if isinstance(broader_record, dict):
+                    id_keys = list(filter(lambda x: x.endswith('_id'), broader_record.keys()))
+                    ext_id = broader_record[id_keys[0]] if len(id_keys) > 0 else 'error'
+                    broader_record['external_id'] = ext_id
+                    if not 'type' in broader_record:
+                        broader_record['type'] = 'unknown'
     return recx
 
-    
