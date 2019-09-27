@@ -294,7 +294,7 @@ def review(request, external_id):
         explanation[sa.subject]["support"].append({"indexer": sa.indexer.ai_name, "score": sa.score})
     explanation = list(explanation.items())
     
-    show_graph = request.GET.get('graph', False) or True # TODO introduce admin online param?!
+    show_graph = request.GET.get('graph', False) # TODO introduce admin online param?!
     
     context = {
             "guideline": guideline_link, # latest guideline

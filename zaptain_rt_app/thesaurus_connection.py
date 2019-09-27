@@ -255,13 +255,17 @@ class ThesaurusApi(object):
         
         returns a dictionary that maps top-level category URIs to corresponding names.
         """
-        rsp = self._q(Q_TOP_CATEGORIES)
-        if rsp.status_code != 200:
-            logging.error("error querying top categories... %s" % (repr(rsp), ))
-            logging.error(rsp.content)
+        try:
+            rsp = self._q(Q_TOP_CATEGORIES)
+            if rsp.status_code != 200:
+                logging.error("error querying top categories... %s" % (repr(rsp), ))
+                logging.error(rsp.content)
+                return dict()
+            rsp_bindings = rsp.json()["results"]["bindings"]
+            return dict((e['code']['value'], e['t']['value']) for e in rsp_bindings)
+        except ReadTimeoutError:
+            logging.error("Querying top categories timed out.")
             return dict()
-        rsp_bindings = rsp.json()["results"]["bindings"]
-        return dict((e['code']['value'], e['t']['value']) for e in rsp_bindings)
     
     def categories(self, concept_uris, return_type='code'):
         """
