@@ -250,7 +250,6 @@
 <div class="col-md-9">
 <h4>Missing Subjects</h4>
 <div class="panel panel-default">
-{% if not review %}
 <div class="input-group">
     <div class="input-group-btn">
         <button id="bu_info_descriptor_search" type="button" class="btn btn-default"  data-toggle="modal" data-target="#div_info_descriptor_search"><span class="glyphicon glyphicon-info-sign"></span></button>
@@ -278,7 +277,6 @@
     </div>
   </div>
 </div>
-{% endif %}
 <table id="tbl_missingsubjs" class="table table-condensed">
 {{ subjmissing_form.management_form }}
 <tr>
