@@ -122,7 +122,6 @@ def collectionDocumentListView(request, collection_id):
     template_name = 'zaptain_rt/collection_document_list.html'
     collection = get_object_or_404(Collection, id=collection_id)
     user = request.user
-    
     reviews = Review.objects.filter(reviewer=user).filter(document__in=collection.documents.all())
     todo_list = collection.documents.exclude(review__in=Review.objects.filter(reviewer=user))
     context = {
@@ -191,6 +190,8 @@ def review(request, external_id):
             
             try:
                 with transaction.atomic():
+                    if dbreview is not None:
+                        dbreview.delete()
                     if doclevel_choice.startswith('skip'):
                         ##
                         #
@@ -258,11 +259,12 @@ def review(request, external_id):
         subjratings_form = SubjectRatingFormset(initial=_initial_subjrating, prefix='sar')
         subjmissing_form = SubjectMissingFormset(initial=_initial_subjmissing, prefix="smis")
         docrating_form = DocumentRatingForm(initial={"rating": _initial_doc_level}, prefix='dor')
-        if dbreview:
-            # DISABLE INPUT:
-            docrating_form.disable()
-            for form in subjratings_form:
-                form.disable()
+        # TODO(fuer) can be removed once review changes are possible.
+#       if dbreview:
+#           # DISABLE INPUT:
+#           docrating_form.disable()
+#           for form in subjratings_form:
+#               form.disable()
     
     for sf in subjmissing_form:
         subjs_infodemanded.add(sf['uri'].value())
