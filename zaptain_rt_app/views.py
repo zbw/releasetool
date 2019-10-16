@@ -294,7 +294,7 @@ def review(request, external_id):
         explanation[sa.subject]["support"].append({"indexer": sa.indexer.ai_name, "score": sa.score})
     explanation = list(explanation.items())
     
-    show_graph = request.GET.get('graph', False) # TODO introduce admin online param?!
+    show_graph = request.GET.get('graph', True) # TODO introduce admin online param?!
     
     context = {
             "guideline": guideline_link, # latest guideline
@@ -305,7 +305,7 @@ def review(request, external_id):
             "docjson_str": json.dumps(rqctx["jsondoc"], indent=2),
             "collection_slice": (_predecessor, _successor), # paginator_page,
             "progress": rqctx['reviewer'].get_progress_info(collection),
-            "explanation": explanation,
+            # "explanation": explanation,
             
             "review": dbreview,
             "docrating_form": docrating_form,
