@@ -33,7 +33,7 @@ from django.db import transaction
 
 from django import forms
 
-from django_q.tasks import async
+from django_q.tasks import async_task
 
 from urllib.parse import urlencode
 
@@ -235,7 +235,7 @@ class ReleaseCandidateAdmin(admin.ModelAdmin):
             self.message_user(request, "Too many items selected!", messages.ERROR)
             return
         rc = queryset.first()
-        task_id = async(self._fetch_metadata_complete_task, rc)
+        task_id = async_task(self._fetch_metadata_complete_task, rc)
         tasks_url = reverse("admin:app_list", args=("django_q",))
         msg_tmplt = 'begin: gather meta-data asynchronously, <a href="{url}">task id = {id}</a>.'
         msg_data = {"url": tasks_url, "id": task_id}
@@ -398,7 +398,7 @@ class DocumentAdmin(ImportMixin, ExportActionModelAdmin, admin.ModelAdmin):
     def fetch_metadata_async(self, request, queryset):
         # see: http://django-q.readthedocs.io/en/latest/tasks.html#django_q.async
         catapi = CatalogApi.create_from_db()
-        task_id = async(catapi.fetch_metadata, queryset)        
+        task_id = async_task(catapi.fetch_metadata, queryset)        
         tasks_url = reverse("admin:app_list", args=("django_q",))
         msg_tmplt = 'begin: gather meta-data asynchronously, <a href="{url}">task id = {id}</a>.'
         msg_data = {"url": tasks_url, "id": task_id}
@@ -432,7 +432,7 @@ class DocumentAdmin(ImportMixin, ExportActionModelAdmin, admin.ModelAdmin):
 
 
 @admin.register(SubjectAssignment)
-class SubjectAssignmentAdmin(admin.ModelAdmin):
+class SubjectAssignmentAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     list_display = ('id', 'document', 'subject', 'score', 'indexer')
     list_filter = ('indexer',)
     search_fields = ('document__external_id', 'subject')
