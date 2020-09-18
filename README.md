@@ -85,8 +85,35 @@ at the command line using [commands](zaptain_rt_app/management/commands/).
   * [PROSIs](docs/README_PROSI.md) (professional subject indexers) mainly perform reviews,
   * [LISUs](docs/README_LISU.md) (librarian super users) manage and monitor releases.
 
+## How to run
+The easiest way to run releasetool is via docker.
+1. Check out the repository.
+2. Copy `zaptain_ui/settings_template.py` to `zaptain_ui/settings_local.py` and adjust the File to your needs.
+Especially change the `SECRET_KEY` variable and remove the line below it.
+One possibility to create a secret is `< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-64};echo;`.
+3. Run `docker build -t rt .` from inside the base directory of this repository.
+4. Run `docker run -it --rm -p 8085:8000 rt`.
+To persists the data use [docker volumes](https://docs.docker.com/storage/volumes/).
+The important directorys inside the container are `/rt_data` and `rt_media`.
+Furthermore you should [expose](https://docs.docker.com/engine/reference/commandline/run/#publish-or-expose-port--p---expose) port 8000 of the container.
+5. Access the UI in a browser at `http://<your_host>:<port_defined_above>/releasetool`
+6. Login using the credentials `rtadmin` with password `changeme`.
+7. Click on `Admin` in the upper right corner.
+8. Change the password. This functionality is again available in the upper right corner.
+9. Inside the admin view select `Rt configs`
+10. Now change all available keys to your desired values.
+This can be done by clicking on them, then hit `SAVE` in the lower left corner.
 
-
+|Key   | Description | Example|
+|------|------------:|-------:|
+catalog API pattern|  URL where the tool can get metadata from. Needs to be parametrized with `{docid}. |`https://api.econbiz.de/v1/{docid}
+document weblink pattern| URL  where the user can access the publication. Needs to be parametrized with `{docid}`| https://www.econbiz.de/Record/{docid}
+name of the main automatic indexing method| Name of the indexing method that has generated the suggestions. This needs to be the same as the one you set for your imported collcection.| zaptain-rules
+support email|Email where users can reach support | someone@domain.org
+thesaurus category type| Type for thesausurus category. Used to structure the graph view.|http://zbw.eu/namespaces/zbw-extensions/Thsys
+thesaurus descriptor type| Type for thesaurus concepts. |http://zbw.eu/namespaces/zbw-extensions/Descriptor
+thesaurus sparql endpoint| URL where the thesaurus can be queried using SPARQL| http://zbw.eu/beta/sparql/stw/query
+thesaurus sparql query  |Not used | |
 
 
 
