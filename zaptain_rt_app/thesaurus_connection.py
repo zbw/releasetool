@@ -54,12 +54,15 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-SELECT * WHERE {
-  values (?c) { %s } .
-  ?c a skos:Concept ;
-     skos:prefLabel ?label .
-  FILTER (lang(?label) = "en")
+SELECT ?c (GROUP_CONCAT(?prefLabel; SEPARATOR=" / ") as ?label) WHERE {
+  SELECT * WHERE{
+    values (?c) { %s } .
+    ?c a skos:Concept ;
+       skos:prefLabel ?prefLabel .
+    }
+    ORDER BY DESC(lang(?prefLabel))
 }
+GROUP BY ?c
 """
 
 QT_CATEGORY_PATHS = """
@@ -173,7 +176,7 @@ PREFIX text: <http://jena.apache.org/text#>
 SELECT DISTINCT ?c ?prefLabel ?literal ?score
 WHERE {{
   (?c ?score ?literal)
-     text:query ("{autocomplete_string}" 'lang:en') .
+     text:query ("{autocomplete_string}" ) .
   ?c a skos:Concept, <{descriptor_type}> ;
      skos:prefLabel ?prefLabel .
   FILTER (lang(?prefLabel) = "{lang}")
@@ -192,7 +195,7 @@ PREFIX text: <http://jena.apache.org/text#>
 SELECT ?c ?prefLabel ?literal ?score
 WHERE {{
   (?c ?score ?literal)
-     text:query ("{autocomplete_string}" 'lang:en') .
+     text:query ("{autocomplete_string}" ) .
   ?c a skos:Concept, <{descriptor_type}> ;
      skos:prefLabel ?prefLabel .
   FILTER (lang(?prefLabel) = "{lang}")
@@ -349,14 +352,14 @@ class ThesaurusApi(object):
                     logging.warning(el_)
         return relations_
     
-    def _q(self, query, concept_uris=None):
+    def _q(self, query, concept_uris=None, timeout=_TIMEOUT_S):
         """
         perform a POST http requests action,
         please handle TIMEOUTs, --> ReadTimeoutError
         """
         if not concept_uris is None:
             query = query % (ThesaurusApi._curis_to_valueliststr(concept_uris))
-        return requests.post(self.endpoint, data={"query": query}, timeout=_TIMEOUT_S)
+        return requests.post(self.endpoint, data={"query": query}, timeout=timeout)
     
     @staticmethod
     def _curis_to_valueliststr(concept_uris):
