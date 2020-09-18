@@ -285,9 +285,8 @@
 {% for r in subjmissing_rowdata %}
 <tr>
     {# r.form.DELETE #}
-    <td>{% if not review %}
+    <td>
         <a class="subj_remove" data-c="{{r.info.uri}}">remove</a>
-        {% endif %}
     </td>
     {# <input name="smis-0-DELETE" id="id_smis-0-DELETE" type="checkbox"> #}
     <td>
