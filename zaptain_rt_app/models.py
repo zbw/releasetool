@@ -333,9 +333,9 @@ class ReviewerWrapper(object):
 
 DOCLEVEL_CHOICES = (
     ("skip", "skip"),
-    ("reject", "reject"), 
-    ("fair", "fair"),
-    ("good", "good"))
+    ("reject", "--"), 
+    ("fair", "+/0"),
+    ("good", "++"))
 class Review(models.Model):
     """
     Representation of a complete review that comprises 

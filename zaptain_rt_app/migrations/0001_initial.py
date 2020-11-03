@@ -68,7 +68,7 @@ class Migration(migrations.Migration):
             name='Review',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('total_rating', models.CharField(choices=[('skip', 'skip'), ('reject', 'reject'), ('fair', 'fair'), ('good', 'good')], max_length=20)),
+                ('total_rating', models.CharField(choices=[('skip', 'skip'), ('reject', '--'), ('fair', '+/0'), ('good', '++')], max_length=20)),
             ],
         ),
         migrations.CreateModel(
