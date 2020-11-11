@@ -195,6 +195,7 @@ class Document(models.Model):
     external_id = models.CharField(max_length=50, unique=True, primary_key=True)
     title = models.CharField(max_length=500)
     has_abstract = models.BooleanField(default=False) # models.CharField(max_length=1, choices=AVAILABILITY_YES, default=AVAILABILITY_UNKNOWN)
+    has_ft_url = models.BooleanField(default=False)
     doc_type = models.CharField(max_length=50, blank=True)
     broader = models.ManyToManyField("Document", blank=True, related_name='narrower')
     
