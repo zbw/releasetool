@@ -154,6 +154,8 @@ class ReleaseCandidateAdmin(admin.ModelAdmin):
                             white_queryset = (white_queryset if white_queryset else Document.objects.all()).filter(has_abstract=True)
                         if form.cleaned_data["require_fulltext_url"]:
                             white_queryset = (white_queryset if white_queryset else Document.objects.all()).filter(has_ft_url=True)
+                        collections = Collection.objects.iterator()
+                        white_queryset = (white_queryset if white_queryset else Document.objects.all()).exclude(collection__in=collections)
                         if white_queryset:
                             whiteset = set(white_queryset.values_list("external_id", flat=True))
                         

@@ -150,9 +150,15 @@ def review(request, external_id):
     
     _predecessor = None
     _successor = None
+    user=request.user
+    reviews = Review.objects.filter(reviewer=user).filter(document__in=collection.documents.all())
     if collection is not None:
-        _predecessor = collection.documents.filter(external_id__lt=dbdoc.external_id).last()
-        _successor = collection.documents.filter(external_id__gt=dbdoc.external_id).first()
+        _predecessor = collection.documents.filter(
+            external_id__lt=dbdoc.external_id).exclude(
+                review__in=reviews).last()
+        _successor = collection.documents.filter(
+            external_id__gt=dbdoc.external_id).exclude(
+                review__in=reviews).first()
     
     ## DETERMINE MAIN AI:
     ai_main = SubjectIndexer.get_main_ai()
@@ -232,9 +238,9 @@ def review(request, external_id):
                 # redirect >> review next document for user for collection
                 if _successor:
                     _nexturl = reverse("review", kwargs={"external_id": _successor.external_id})
-                    return HttpResponseRedirect(_nexturl + "?" + urlencode({"collection_id": collection.id}))
+                    return HttpResponseRedirect(_nexturl + "?" + urlencode({"collection": collection.id}))
                 # if next document not available, redirect to collection overview
-                return HttpResponseRedirect(reverse("collection", kwargs={"collection_id": collection.id}))
+                return HttpResponseRedirect(reverse("collection", kwargs={"collection": collection.id}))
     else:
         # in particular: GET REQUEST
         _initial_doc_level = ""
