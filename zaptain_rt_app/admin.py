@@ -38,6 +38,7 @@ from django_q.tasks import async_task
 from urllib.parse import urlencode
 
 from io import StringIO
+import logging
 
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin, ImportMixin, ExportMixin, ExportActionModelAdmin
@@ -88,6 +89,7 @@ class SampleForm(forms.Form):
                                    required=False,
                                  max_length=50) # TODO max_length=Document.external_id.max_length)
     require_abstract = forms.BooleanField(required=False)
+    require_fulltext_url = forms.BooleanField(required=False)
     size = forms.IntegerField(label="Size", min_value=1, max_value=1000)
 
 # see: ReleaseCandidateAdmin.sample_view ## def sample_view_fun(request, rc_id, *args, **kwargs):
@@ -104,7 +106,7 @@ class SampleForm(forms.Form):
 @admin.register(ReleaseCandidate)
 class ReleaseCandidateAdmin(admin.ModelAdmin):
     list_display = ('name', 'pub_date', 'file', 'indexer', 'num_documents', 'sample')
-    actions = ['compute_info', 'compare', 'sample_action', 'create_stubs', 'fetch_metadata_complete']
+    actions = ['compute_info', 'compare', 'sample_action', 'create_stubs', 'fetch_metadata_complete', 'fetch_title_action']
         
     def get_urls(self):
         sample_url = path('sample/<rc_id>', self.admin_site.admin_view(self.sample_view), name='sample')
@@ -150,6 +152,8 @@ class ReleaseCandidateAdmin(admin.ModelAdmin):
                             white_queryset = parent_rec.narrower.all()
                         if form.cleaned_data["require_abstract"]:
                             white_queryset = (white_queryset if white_queryset else Document.objects.all()).filter(has_abstract=True)
+                        if form.cleaned_data["require_fulltext_url"]:
+                            white_queryset = (white_queryset if white_queryset else Document.objects.all()).filter(has_ft_url=True)
                         if white_queryset:
                             whiteset = set(white_queryset.values_list("external_id", flat=True))
                         
@@ -193,6 +197,31 @@ class ReleaseCandidateAdmin(admin.ModelAdmin):
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [sample_template_name],
                                 context)
+
+    def fetch_title_action(self, request, queryset):
+        catapi = CatalogApi.create_from_db()
+        for rc in queryset:
+            for docid in rc.get_document_ids():
+                dbdoc = Document.objects.get(external_id=docid)
+                if dbdoc.title:
+                    continue
+                jdoc = catapi.fetch(docid)
+                if not "error" in jdoc:
+                    title = jdoc["title"] # "xxx"
+                    dbdoc.title = title
+                    desc = jdoc.get("description")
+                    if desc != "-unavailable-":
+                        dbdoc.has_abstract = True
+                    ft_urls = jdoc.get("identifier_url")
+                    if ft_urls:
+                        dbdoc.has_ft_url = True
+                    dbdoc.save()
+                    self.message_user(request, "successfully set %s's title." % (docid,))
+                else:
+                    self.message_user(request, "error @ " + docid, messages.ERROR)
+                    logging.error(jdoc["error"])
+    fetch_title_action.short_description = "fetch title"
+    
     
     def num_documents(self, obj):
         return len(obj.get_document_ids())
@@ -235,6 +264,7 @@ class ReleaseCandidateAdmin(admin.ModelAdmin):
             self.message_user(request, "Too many items selected!", messages.ERROR)
             return
         rc = queryset.first()
+        logging.warning(rc)
         task_id = async_task(self._fetch_metadata_complete_task, rc)
         tasks_url = reverse("admin:app_list", args=("django_q",))
         msg_tmplt = 'begin: gather meta-data asynchronously, <a href="{url}">task id = {id}</a>.'
@@ -332,22 +362,6 @@ class CollectionAdmin(ImportMixin, ExportActionModelAdmin, admin.ModelAdmin):
     analysis_link.allow_tags = True
     analysis_link.short_description = "analysis"
     
-    def fetch_title_action(self, request, queryset):
-        catapi = CatalogApi.create_from_db()
-        for dbcollection in queryset:
-            for dbdoc in dbcollection.documents.all():
-                docid = dbdoc.external_id
-                jdoc = catapi.fetch(docid)
-                if not "error" in jdoc:
-                    title = jdoc["title"] # "xxx"
-                    dbdoc.title = title
-                    dbdoc.save()
-                    self.message_user(request, "successfully set %s's title." % (docid,))
-                else:
-                    self.message_user(request, "error @ " + docid, messages.ERROR)
-                    break
-    fetch_title_action.short_description = "fetch title"
-    
     def merge_action(self, request, queryset):
         if queryset.count() < 2:
             self.message_user(request, "Too less items selected!", messages.ERROR)
@@ -377,9 +391,9 @@ class RtConfigAdmin(admin.ModelAdmin):
 @admin.register(Document)
 class DocumentAdmin(ImportMixin, ExportActionModelAdmin, admin.ModelAdmin):
     exclude = ('broader',) # select field is slow for extensive num of choices # maybe later use filter_horizontal = ('authors',)
-    list_display = ('external_id', 'title', 'has_abstract', 'doc_type', 'narrower_count', 'narrower_with_abstract_count', 'sample')
+    list_display = ('external_id', 'title', 'has_abstract', 'has_ft_url', 'doc_type', 'narrower_count', 'narrower_with_abstract_count', 'sample')
     search_fields = ('external_id', 'title')
-    list_filter = ('doc_type', 'has_abstract')
+    list_filter = ('doc_type', 'has_abstract', 'has_ft_url')
     resource_class = DocumentResource
     actions = ["fetch_metadata_async"]
     
