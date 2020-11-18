@@ -37,7 +37,7 @@ from .online_configuration import RtConfigChoices
 from .online_configuration import CK_THES_SPARQL_ENDPOINT, CK_THES_DESCRIPTOR_TYPE, CK_THES_CATEGORY_TYPE
 
 
-_TIMEOUT_S = 2.000 ## TIMEOUT IN SECONDS
+_TIMEOUT_S = 5.000 ## TIMEOUT IN SECONDS
 
 
 ## TODO maybe use rdflib.plugins.sparql.prepareQuery instead...
@@ -179,7 +179,7 @@ WHERE {{
      text:query ("{autocomplete_string}" ) .
   ?c a skos:Concept, <{descriptor_type}> ;
      skos:prefLabel ?prefLabel .
-  FILTER (lang(?prefLabel) = "{lang}")
+  FILTER (lang(?prefLabel) IN ( {languages} ))
 }}
 ORDER BY ?score
 """
@@ -198,7 +198,7 @@ WHERE {{
      text:query ("{autocomplete_string}" ) .
   ?c a skos:Concept, <{descriptor_type}> ;
      skos:prefLabel ?prefLabel .
-  FILTER (lang(?prefLabel) = "{lang}")
+  FILTER (lang(?prefLabel) IN ( {languages} ))
   FILTER (regex(str(?literal), "(?i)^{regex_string}.*"))
 }}
 ORDER BY DESC(?score)
@@ -208,7 +208,7 @@ ORDER BY DESC(?score)
 
 class ThesaurusApi(object):
     
-    def __init__(self, endpoint, descriptor_type, category_type, lang='en'):
+    def __init__(self, endpoint, descriptor_type, category_type, languages=["de", "en"]):
         """
         examples:
             see tests.py
@@ -216,7 +216,7 @@ class ThesaurusApi(object):
         self.endpoint = endpoint
         self.Dtype = descriptor_type
         self.Ktype = category_type
-        self.lang = lang
+        self.languages = languages
     
     def autocomplete(self, autocomplete_string, limit=-1, exact_begin=False):
         template = Q_AUTOCOMPLETE_EXACT if exact_begin else Q_AUTOCOMPLETE_FUZZY
@@ -224,7 +224,7 @@ class ThesaurusApi(object):
                 descriptor_type=self.Dtype, 
                 autocomplete_string=autocomplete_string, 
                 regex_string=autocomplete_string.strip("*"),
-                lang=self.lang)
+                languages=", ".join(["\""+ lang +"\"" for lang in self.languages]))
         if type(limit) is int and limit > -1:
             _qs = _qs + "LIMIT %d" % (limit, )
         rsp = self._q(_qs)

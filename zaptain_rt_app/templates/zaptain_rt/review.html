@@ -430,24 +430,30 @@ $(document).ready(function(){
                 },
                 success: function(data) {
                     var _exclude = collect_subjects();
-                    var proposals = [];
+                    var proposals = new Object();
                     $.each( data.results.bindings, function( i, cobj ) {
                         var cref = cobj.c.value;
                         if (_exclude.indexOf(cref) < 0) {
-                            var sugi = new Object();  // i'th suggested item
-                            sugi.label = cobj.literal.value;
-                            if (cobj.literal.value == cobj.prefLabel.value) {
-                                sugi.label += " / *";
-                            } else {
-                                sugi.label += " / " + cobj.prefLabel.value;
+                            var concept_id = cobj.c.value
+                            sugi = proposals[concept_id]
+                            if(!sugi){
+                                var sugi = new Object();
+                                sugi.value = cobj
+                                sugi.label = cobj.literal.value;
+                                sugi.prefLabels = new Set()
+                                proposals[concept_id] = sugi
                             }
-                            sugi.value = cobj;
-                            proposals.push(sugi);
-                            // from now on, exclude this concept...
-                            _exclude.push(cref);
+                            sugi.prefLabels.add(cobj.prefLabel.value);
                         }
                     });
-                    response(proposals);
+                    resp_data = []
+                    for (const [key, value] of Object.entries(proposals)){
+                        resp_object = new Object()
+                        resp_object.label = value.label + " / " + Array.from(value.prefLabels).join(" / ")
+                        resp_object.value = value.value
+                        resp_data.push(resp_object)
+                     }
+                    response(resp_data);
                 }
             });
         },
