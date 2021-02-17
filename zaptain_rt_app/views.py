@@ -323,7 +323,7 @@ def review(request, external_id):
             "extended_form": request.GET.get('extended_form', False),
             "debug": request.GET.get('debug', False),
             
-            "show_graph": show_graph
+            "show_graph": False #show_graph
     }
     return render(request, 'zaptain_rt/review.html', context)
 
