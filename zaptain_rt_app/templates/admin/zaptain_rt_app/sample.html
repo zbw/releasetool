@@ -44,13 +44,6 @@
   {% endif %}
 </div>
 <div class="form-row">
-  {{ form.parent_rec_id.errors }}
-  {{ form.parent_rec_id.label_tag }} {{ form.parent_rec_id }}
-  {% if form.parent_rec_id.help_text %}
-  <div class="help">{{ form.parent_rec_id.help_text|safe }}</div>
-  {% endif %}
-</div>
-<div class="form-row">
   {{ form.require_abstract.errors }}
   {{ form.require_abstract.label_tag }} {{ form.require_abstract }}
   {% if form.require_abstract.help_text %}
@@ -69,6 +62,20 @@
   {{ form.size.label_tag }} {{ form.size }}
   {% if form.size.help_text %}
   <div class="help">{{ form.size.help_text|safe }}</div>
+  {% endif %}
+</div>
+<div class="form-row">
+  {{ form.count.errors }}
+  {{ form.count.label_tag }} {{ form.count }}
+  {% if form.count.help_text %}
+  <div class="help">{{ form.count.help_text|safe }}</div>
+  {% endif %}
+</div>
+<div class="form-row">
+  {{ form.prefix.errors }}
+  {{ form.prefix.label_tag }} {{ form.prefix }}
+  {% if form.prefix.help_text %}
+  <div class="help">{{ form.prefix.help_text|safe }}</div>
   {% endif %}
 </div>
 {% endif %}

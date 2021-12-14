@@ -70,27 +70,16 @@ class CollectionResource(resources.ModelResource):
 
 #-----# special views and forms: #----#
         
-class ParentRecordField(forms.CharField):
-    
-    def validate(self, value):
-        super().validate(value)
-        if len(value) > 0:
-            try:
-                parent_rec_dbo = Document.objects.get(external_id=value)
-            except Document.DoesNotExist:
-                raise forms.ValidationError("parent record does not exist!")
-
 class SampleForm(forms.Form):
     """
     Form for sampling collections from release candidates.
     """
     rc = forms.ModelChoiceField(ReleaseCandidate.objects.all(), label="release candidate")
-    parent_rec_id = ParentRecordField(label="parent record external_id (journal/series)", 
-                                   required=False,
-                                 max_length=50) # TODO max_length=Document.external_id.max_length)
     require_abstract = forms.BooleanField(required=False)
     require_fulltext_url = forms.BooleanField(required=False)
     size = forms.IntegerField(label="Size", min_value=1, max_value=1000)
+    count = forms.IntegerField(label="Number of collections", min_value=1, max_value=1000)
+    prefix = forms.CharField(label='Prefix for collection names', min_length=1, max_length=20, initial='C')
 
 # see: ReleaseCandidateAdmin.sample_view ## def sample_view_fun(request, rc_id, *args, **kwargs):
     
@@ -132,9 +121,7 @@ class ReleaseCandidateAdmin(admin.ModelAdmin):
     sample_action.short_description = "Sample"
     
     def sample_view(self, request, rc_id, *args, **kwargs):
-        _iformdata = {"size": 200, "rc": rc_id}
-        if "parent_rec_id" in request.GET:
-            _iformdata["parent_rec_id"] = request.GET.get("parent_rec_id")
+        _iformdata = {"size": 200, "rc": rc_id, "prefix": "C", "count": 5}
         form = SampleForm(initial=_iformdata)
         if request.POST:
             form = SampleForm(request.POST)
@@ -142,14 +129,10 @@ class ReleaseCandidateAdmin(admin.ModelAdmin):
                 try:
                     with transaction.atomic():
                         rc_selected = form.cleaned_data["rc"]
-                        parent_rec_id = form.cleaned_data["parent_rec_id"]
                         
                         whiteset = None
                         white_queryset = None
                         parent_rec = None
-                        if len(parent_rec_id) > 0:
-                            parent_rec = Document.objects.get(external_id=parent_rec_id) 
-                            white_queryset = parent_rec.narrower.all()
                         if form.cleaned_data["require_abstract"]:
                             white_queryset = (white_queryset if white_queryset else Document.objects.all()).filter(has_abstract=True)
                         if form.cleaned_data["require_fulltext_url"]:
@@ -161,31 +144,31 @@ class ReleaseCandidateAdmin(admin.ModelAdmin):
                         
                         rc = ReleaseCandidate.objects.get(name=rc_selected)
                         size = form.cleaned_data["size"]
-                        docids = rc.sample(size, whiteset=whiteset).tolist()
+                        count = form.cleaned_data['count']
+                        n_samples = size * count
+                        docids = rc.sample(n_samples, whiteset=whiteset).tolist()
                         if len(docids) == 0:
                             raise EmptyCollectionException("Empty collection.")
                         if whiteset is not None and len(docids) > len(whiteset):
                             raise IllegalStateException("collection size > whitelist size")
+                        if whiteset is not None and len(docids) < n_samples:
+                            raise IllegalStateException("Not enought matching documents.")
                         #
                         rc.import_records(docids)
                         #
-                        new_name_prefix = "C"
-                        if parent_rec:
-                            new_name_prefix += "_" + parent_rec_id
-                        name_regex = "^" + new_name_prefix + r"_\d+$"
-                        _nr = Collection.objects.filter(name__regex=name_regex).order_by('name').last()
-                        _nr = (int(_nr.name[(len(new_name_prefix)+1):]) + 1) if _nr else 0
-                        new_name = "%s_%0002d" % (new_name_prefix, _nr, )
-                        col = Collection.objects.create(name=new_name)
-                        col.documents.add(*[Document.objects.get_or_create(external_id=docid)[0] for docid in docids])
-                        col.description = "Sample from %s" % (rc.name,)
-                        if parent_rec:
-                            col.description += " | parent = " 
-                            col.description += '"%s" (%s)' % (parent_rec.title, str(parent_rec_id),)
-                        col.save()
+                        new_name_prefix = form.cleaned_data['prefix']
+                        for idx in range(count):
+                            new_name = f'{new_name_prefix}_{idx:04d}'
+                            col = Collection.objects.create(name=new_name)
+                            col.documents.add(*[Document.objects.get_or_create(external_id=docid)[0] for docid in docids[idx*size:(idx+1)*size]])
+                            col.description = "Sample from %s" % (rc.name,)
+                            if parent_rec:
+                                col.description += " | parent = " 
+                                col.description += '"%s" (%s)' % (parent_rec.title, str(parent_rec_id),)
+                            col.save()
                         ## then, redirect to the newly created collection
                         _cm = Collection._meta
-                        url = reverse("admin:%s_%s_change" % (_cm.app_label, _cm.model_name), kwargs={"object_id": col.id})
+                        url = reverse("admin:%s_%s_changelist" % (_cm.app_label, _cm.model_name))
                         return HttpResponseRedirect(url)
                 except (EmptySampleException, IllegalStateException) as err:
                     msg = "Collection could not be created: %s." % (str(err),)
