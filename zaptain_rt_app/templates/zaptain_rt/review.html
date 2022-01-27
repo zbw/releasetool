@@ -451,6 +451,7 @@ $(document).ready(function(){
                         resp_object = new Object()
                         resp_object.label = value.label + " / " + Array.from(value.prefLabels).join(" / ")
                         resp_object.value = value.value
+                        resp_object.value.prefLabelStr = Array.from(value.prefLabels).join( " / ")
                         resp_data.push(resp_object)
                      }
                     response(resp_data);
@@ -462,7 +463,7 @@ $(document).ready(function(){
             event.preventDefault();
             var selected_itemval = ui.item.value;
             var selected_c = selected_itemval.c.value;
-            var selected_prefLabel = selected_itemval.prefLabel.value;
+            var selected_prefLabel = selected_itemval.prefLabelStr;
             var txtf_ = $("#i_descriptor_search");
             txtf_.data("concept", selected_itemval);
             txtf_.val(""); {# RESET input field #}
