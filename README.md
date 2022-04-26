@@ -116,6 +116,5 @@ thesaurus sparql endpoint| URL where the thesaurus can be queried using SPARQL| 
 thesaurus sparql query  |Not used | |
 
 # Context Information
-This code was created as part of the subject indexing automatization effort at [ZBW - Leibniz Information Centre for Economics](https://www.zbw.eu/en/).r
- See [our homepage](https://www.zbw.eu/en/about-us/key-activities/automated-subject-indexing) for more information, publications, and contact details.
+This code was created as part of the subject indexing automatization effort at [ZBW – Leibniz Information Centre for Economics](https://www.zbw.eu/en/). See [our homepage](https://www.zbw.eu/en/about-us/key-activities/automated-subject-indexing) for more information, publications, and contact details.
 The releasetool has been created by Martin Toepfer, 2017–2018.
