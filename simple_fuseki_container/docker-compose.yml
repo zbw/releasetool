@@ -1,0 +1,21 @@
+version: "3"
+
+
+services:
+
+  releasetool:
+    image: rt_test
+    container_name: rt_test
+    volumes:
+      - /tmp/rt_data:/rt_data
+      - /tmp/rt_media:/releasetool/rt_data/
+    ports:
+    - "8085:8000"
+    restart: "unless-stopped"
+
+  sparql:
+    image: fuseki_test
+    container_name: fuseki_test
+    volumes:
+      - /tmp/stw_9.12.rdf:/rdf.xml
+    restart: "unless-stopped"
