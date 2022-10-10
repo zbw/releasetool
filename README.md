@@ -91,11 +91,22 @@ The easiest way to run releasetool is via docker.
 2. Copy `zaptain_ui/settings_template.py` to `zaptain_ui/settings_local.py` and adjust the File to your needs.
 Especially change the `SECRET_KEY` variable and remove the line below it.
 One possibility to create a secret is `< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-64};echo;`.
-The variable `MEDIA_ROOT` contains the location of the database file. and `$MEDIA_ROOT/releasetool` will contain the releasecandidates.
+The database file is defined in the `DATABASES` setting.
+ The database file should be placed somewhere in `/rt_data` (because this folder is created in the Dockerfile for that purpose). E.g.
+```
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': '/rt_data/rt_v1alpha.sqlite',
+    }
+}
+```
+The release candidates are placed in `$MEDIA_ROOT/releasecandidates`. `MEDIA_ROOT` should be a relative path to `/releasetool` , e.g. `MEDIA_ROOT=rt_data` .
 3. Run `docker build -t rt .` from inside the base directory of this repository.
 4. Run `docker run -it --rm -p 8085:8000 rt`.
 To persists the data use [docker volumes](https://docs.docker.com/storage/volumes/).
-The important directory inside the container is `$MEDIA_ROOT`, as set in step two.
+`/rt_data` should be bound to a local folder in order to persist the database.
+`/releasetool/$MEDIA_ROOT/` should be bound to a local folder in order to persist the release candidates.
 It should be bound to a local folder.
 Furthermore you should [expose](https://docs.docker.com/engine/reference/commandline/run/#publish-or-expose-port--p---expose) port 8000 of the container.
 5. Access the UI in a browser at `http://<your_host>:<port_defined_above>/releasetool`

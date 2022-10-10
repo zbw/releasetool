@@ -32,5 +32,5 @@ This is important as the default points to the `/tmp` directory,
 i.e., you will loose your data after a reboot.
 The mount points inside the container have to match the `MEDIA_ROOT` variable of the `settings_local.py` file.
 Then inside the folder containing this readme run `docker-compose up`.
-Open the brwoser and go to "127.0.0.1:8085/releasetool".
+Open the browser and go to "127.0.0.1:8085/releasetool".
 If you run it on a remote machine you have to change the address accordingly.
