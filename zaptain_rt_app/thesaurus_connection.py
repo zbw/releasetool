@@ -32,6 +32,8 @@ except ImportError:
 
 import logging
 
+from collections import defaultdict
+
 from .models import RtConfig
 from .online_configuration import RtConfigChoices
 from .online_configuration import CK_THES_SPARQL_ENDPOINT, CK_THES_DESCRIPTOR_TYPE, CK_THES_CATEGORY_TYPE
@@ -181,7 +183,7 @@ WHERE {{
      skos:prefLabel ?prefLabel .
   FILTER (lang(?prefLabel) IN ( {languages} ))
 }}
-ORDER BY ?score
+ORDER BY DESC(?score) DESC(lang(?prefLabel))
 """
 Q_AUTOCOMPLETE_EXACT = """
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -201,7 +203,7 @@ WHERE {{
   FILTER (lang(?prefLabel) IN ( {languages} ))
   FILTER (regex(str(?literal), "(?i)^{regex_string}.*"))
 }}
-ORDER BY DESC(?score)
+ORDER BY DESC(?score) DESC(lang(?prefLabel))
 """
 
 #----# CLASSES #----#
@@ -249,8 +251,16 @@ class ThesaurusApi(object):
             logging.error("Querying labels for concepts failed.")
             logging.error(rsp.content)
             return _fallback_rsp
-        thelabels = dict((e['c']['value'], e['label']['value']) for e in rsp.json()["results"]["bindings"])
-        return thelabels
+        thelabels = defaultdict(list)
+        for e in rsp.json()["results"]["bindings"]:
+            key = e['c']['value']
+            value = e['label']['value']
+            thelabels[key].append(value)
+        joinedlabels = {
+                cncpt_id: ' / '.join(labels)
+                for cncpt_id, labels
+                in thelabels.items()}
+        return joinedlabels
     
     def top_categories(self):
         """

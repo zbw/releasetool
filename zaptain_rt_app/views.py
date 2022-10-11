@@ -240,7 +240,7 @@ def review(request, external_id):
                     _nexturl = reverse("review", kwargs={"external_id": _successor.external_id})
                     return HttpResponseRedirect(_nexturl + "?" + urlencode({"collection": collection.id}))
                 # if next document not available, redirect to collection overview
-                return HttpResponseRedirect(reverse("collection", kwargs={"collection": collection.id}))
+                return HttpResponseRedirect(reverse("collection", kwargs={"collection_id": collection.id}))
     else:
         # in particular: GET REQUEST
         _initial_doc_level = ""
